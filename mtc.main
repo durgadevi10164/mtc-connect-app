@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MTC App</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #eef6ff;
+      display: flex;
+      height: 100vh;
+      justify-content: center;
+      align-items: center;
+    }
+    .container {
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      width: 340px;
+      text-align: center;
+    }
+    input, select {
+      width: 100%;
+      padding: 10px;
+      margin: 8px 0;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+    }
+    button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 10px;
+      border: none;
+      border-radius: 8px;
+      color: white;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    .send-btn { background: #007bff; }
+    .verify-btn { background: #28a745; }
+    .tamil { background: #ff5722 !important; }
+    .english { background: #007bff !important; }
+    .malayalam { background: #4caf50 !important; }
+    .telugu { background: #9c27b0 !important; }
+    .kannada { background: #ff9800 !important; }
+    .error { color: red; font-size: 14px; }
+    .bus-card {
+      border: 1px solid #333; padding: 15px; margin: 10px; border-radius: 8px;
+      text-align: left;
+    }
+    .seats {
+      display: grid; grid-template-columns: repeat(8, 1fr);
+      gap: 10px; justify-content: center; margin-top: 20px;
+    }
+    .seat {
+      width: 40px; height: 40px; background: lightgray;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; border-radius: 5px;
+    }
+    .seat.selected { background: green; color: white; }
+    .seat.booked { background: red; cursor: not-allowed; }
+    #summary { margin-top: 20px; font-size: 18px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2 id="title">Login</h2>
+    
+    <!-- Step 1: Mobile Number -->
+    <div id="loginForm">
+      <input type="text" id="mobile" placeholder="Enter Mobile Number">
+      <p id="error" class="error"></p>
+      <button class="send-btn" onclick="sendOtp()">Send OTP</button>
+    </div>
+
+    <!-- Step 2: OTP Verification -->
+    <div id="otpForm" style="display:none;">
+      <input type="text" id="otp" placeholder="Enter OTP">
+      <p id="errorOtp" class="error"></p>
+      <button class="verify-btn" onclick="verifyOtp()">Verify OTP</button>
+    </div>
+
+    <!-- Step 3: Language Selection -->
+    <div id="languageForm" style="display:none;">
+      <h2>Select Your Language</h2>
+      <button class="tamil" onclick="selectLanguage('Tamil')">தமிழ்</button>
+      <button class="english" onclick="selectLanguage('English')">English</button>
+      <button class="malayalam" onclick="selectLanguage('Malayalam')">മലയാളം</button>
+      <button class="telugu" onclick="selectLanguage('Telugu')">తెలుగు</button>
+      <button class="kannada" onclick="selectLanguage('Kannada')">ಕನ್ನಡ</button>
+    </div>
+
+    <!-- Step 4: Home Page -->
+    <div id="homePage" style="display:none;">
+      <h2 id="welcomeText">Plan Your Travel 🚌</h2>
+      <input type="text" id="fromPlace" placeholder="From Place">
+      <input type="text" id="toPlace" placeholder="To Destination">
+      
+      <label for="travelTime" id="timeLabel">Choose Time:</label>
+      <input type="time" id="travelTime">
+      <select id="ampm">
+        <option value="AM">AM</option>
+        <option value="PM">PM</option>
+      </select>
+
+      <button onclick="findBuses()" style="background:#28a745;">Find Buses</button>
+    </div>
+
+    <!-- Step 5: Available Buses -->
+    <div id="busPage" style="display:none;">
+      <h2 id="busTitle">Available Buses</h2>
+      <p id="route"></p>
+      <div id="busList"></div>
+    </div>
+
+    <!-- Step 6: Seat Selection -->
+    <div id="seatPage" style="display:none;">
+      <h2>Select Your Seats</h2>
+      <h3 id="busName"></h3>
+      <div class="seats" id="seatContainer"></div>
+      <div id="summary">
+        Selected Seats: <span id="selectedCount">0</span><br>
+        Total Price: ₹<span id="totalPrice">0</span>
+      </div>
+      <button onclick="bookTickets()" style="background:blue;">Book Ticket</button>
+    </div>
+  </div>
+
+  <script>
+    // OTP Flow
+    function sendOtp() {
+      let mobile = document.getElementById("mobile").value;
+      if (mobile.length === 10) {
+        document.getElementById("loginForm").style.display = "none";
+        document.getElementById("otpForm").style.display = "block";
+        document.getElementById("title").innerText = "Verify OTP";
+        alert("Dummy OTP sent: 1234");
+      } else {
+        document.getElementById("error").innerText = "Enter a valid 10-digit number";
+      }
+    }
+
+    function verifyOtp() {
+      let otp = document.getElementById("otp").value;
+      if (otp === "1234") {
+        document.getElementById("otpForm").style.display = "none";
+        document.getElementById("languageForm").style.display = "block";
+        document.getElementById("title").innerText = "Choose Language";
+      } else {
+        document.getElementById("errorOtp").innerText = "Invalid OTP, try again!";
+      }
+    }
+
+    // Language Selection
+    function selectLanguage(lang) {
+      localStorage.setItem("preferredLanguage", lang);
+      document.getElementById("languageForm").style.display = "none";
+      document.getElementById("homePage").style.display = "block";
+      document.getElementById("title").innerText = "Home";
+      setLanguage(lang);
+    }
+
+    function setLanguage(lang) {
+      const translations = {
+        "English": { welcome:"Plan Your Travel 🚌", from:"From Place", to:"To Destination", time:"Choose Time:", button:"Find Buses", busTitle:"Available Buses" },
+        "Tamil": { welcome:"உங்கள் பயணத்தை திட்டமிடுங்கள் 🚌", from:"புறப்படும் இடம்", to:"சேரும் இடம்", time:"நேரத்தைத் தேர்ந்தெடுக்கவும்:", button:"பேருந்துகளை காண்க", busTitle:"கிடைக்கும் பேருந்துகள்" },
+        "Malayalam": { welcome:"നിങ്ങളുടെ യാത്ര പദ്ധതിയിടുക 🚌", from:"തുടങ്ങുന്ന സ്ഥലം", to:"ലക്ഷ്യസ്ഥാനം", time:"സമയം തിരഞ്ഞെടുക്കുക:", button:"ബസുകൾ കണ്ടെത്തുക", busTitle:"ലഭ്യമായ ബസുകൾ" },
+        "Telugu": { welcome:"మీ ప్రయాణాన్ని ప్రణాళిక చేయండి 🚌", from:"ప్రారంభ స్థలం", to:"గమ్యం", time:"సమయాన్ని ఎంచుకోండి:", button:"బస్సులను కనుగొనండి", busTitle:"అందుబాటులో ఉన్న బస్సులు" },
+        "Kannada": { welcome:"ನಿಮ್ಮ ಪ್ರಯಾಣವನ್ನು ಯೋಜಿಸಿ 🚌", from:"ಪ್ರಾರಂಭದ ಸ್ಥಳ", to:"ಗಮ್ಯಸ್ಥಾನ", time:"ಸಮಯವನ್ನು ಆಯ್ಕೆಮಾಡಿ:", button:"ಬಸ್ಸುಗಳನ್ನು ಹುಡುಕಿ", busTitle:"ಲಭ್ಯವಿರುವ ಬಸ್ಸುಗಳು" }
+      };
+      let t = translations[lang];
+      document.getElementById("welcomeText").innerText = t.welcome;
+      document.getElementById("fromPlace").placeholder = t.from;
+      document.getElementById("toPlace").placeholder = t.to;
+      document.getElementById("timeLabel").innerText = t.time;
+      document.querySelector("#homePage button").innerText = t.button;
+      document.getElementById("busTitle").innerText = t.busTitle;
+    }
+
+    // Bus Search
+    function findBuses() {
+      let from = document.getElementById("fromPlace").value;
+      let to = document.getElementById("toPlace").value;
+      let time = document.getElementById("travelTime").value;
+      let ampm = document.getElementById("ampm").value;
+
+      if (from && to && time) {
+        document.getElementById("homePage").style.display = "none";
+        document.getElementById("busPage").style.display = "block";
+        document.getElementById("title").innerText = "Available Buses";
+
+        document.getElementById("route").innerText = "From: " + from + " → To: " + to + " at " + time + " " + ampm;
+
+        let buses = [
+          { id: 1, name: "MTC Express", timing: "10:00 AM", fare: 25 },
+          { id: 2, name: "City Rapid", timing: "10:30 AM", fare: 30 },
+          { id: 3, name: "GreenLine", timing: "11:00 AM", fare: 20 }
+        ];
+
+        let busListDiv = document.getElementById("busList");
+        busListDiv.innerHTML = "";
+
+        buses.forEach(bus => {
+          let div = document.createElement("div");
+          div.className = "bus-card";
+          div.innerHTML = `
+            <h3>${bus.name}</h3>
+            <p>Timing: ${bus.timing}</p>
+            <p>Fare: ₹${bus.fare}</p>
+            <button style="background:green;" onclick="selectBus('${bus.name}', ${bus.fare})">Select</button>
+          `;
+          busListDiv.appendChild(div);
+        });
+      } else {
+        alert("Please fill all details ❗");
+      }
+    }
+
+    // Seat Selection
+    function selectBus(name, fare) {
+      document.getElementById("busPage").style.display = "none";
+      document.getElementById("seatPage").style.display = "block";
+      document.getElementById("title").innerText = "Select Seats";
+
+      document.getElementById("busName").innerText = "Bus: " + name;
+
+      let seatContainer = document.getElementById("seatContainer");
+      seatContainer.innerHTML = "";
+      let selectedSeats = [];
+
+      for (let i = 1; i <= 40; i++) {
+        let seat = document.createElement("div");
+        seat.className = "seat";
+        seat.innerText = i;
+
+        seat.addEventListener("click", function () {
+          if (!seat.classList.contains("booked")) {
+            seat.classList.toggle("selected");
+            if (selectedSeats.includes(i)) {
+              selectedSeats = selectedSeats.filter(s => s !== i);
+            } else {
+              selectedSeats.push(i);
+            }
+            document.getElementById("selectedCount").innerText = selectedSeats.length;
+            document.getElementById("totalPrice").innerText = selectedSeats.length * fare;
+          }
+        });
+
+        seatContainer.appendChild(seat);
+      }
+
+      window.bookTickets = function() {
+        if (selectedSeats.length === 0) {
+          alert("Please select at least 1 seat ❗");
+          return;
+        }
+        alert("🎟 Booking Confirmed!\nBus: " + name +
+          "\nSeats: " + selectedSeats.join(", ") +
+          "\nTotal: ₹" + (selectedSeats.length * fare));
+      };
+    }
+  </script>
+</body>
+</html>

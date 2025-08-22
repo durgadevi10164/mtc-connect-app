@@ -1,266 +1,301 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MTC App</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #eef6ff;
-      display: flex;
-      height: 100vh;
-      justify-content: center;
-      align-items: center;
-    }
-    .container {
-      background: white;
-      padding: 20px;
-      border-radius: 12px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-      width: 340px;
-      text-align: center;
-    }
-    input, select {
-      width: 100%;
-      padding: 10px;
-      margin: 8px 0;
-      border: 1px solid #ccc;
-      border-radius: 8px;
-    }
-    button {
-      width: 100%;
-      padding: 10px;
-      margin-top: 10px;
-      border: none;
-      border-radius: 8px;
-      color: white;
-      font-size: 16px;
-      cursor: pointer;
-    }
-    .send-btn { background: #007bff; }
-    .verify-btn { background: #28a745; }
-    .tamil { background: #ff5722 !important; }
-    .english { background: #007bff !important; }
-    .malayalam { background: #4caf50 !important; }
-    .telugu { background: #9c27b0 !important; }
-    .kannada { background: #ff9800 !important; }
-    .error { color: red; font-size: 14px; }
-    .bus-card {
-      border: 1px solid #333; padding: 15px; margin: 10px; border-radius: 8px;
-      text-align: left;
-    }
-    .seats {
-      display: grid; grid-template-columns: repeat(8, 1fr);
-      gap: 10px; justify-content: center; margin-top: 20px;
-    }
-    .seat {
-      width: 40px; height: 40px; background: lightgray;
-      display: flex; align-items: center; justify-content: center;
-      cursor: pointer; border-radius: 5px;
-    }
-    .seat.selected { background: green; color: white; }
-    .seat.booked { background: red; cursor: not-allowed; }
-    #summary { margin-top: 20px; font-size: 18px; }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MTC Connect</title>
+<style>
+  body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: linear-gradient(135deg, #e0f7fa, #80deea);
+    display: flex;
+    justify-content: center;
+    padding-top: 20px;
+    min-height: 100vh;
+    box-sizing: border-box;
+  }
+  .container {
+    text-align: center;
+    background: white;
+    padding: 25px;
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    width: 95%;
+    max-width: 450px;
+    position: relative;
+  }
+  input, button, select {
+    width: 100%;
+    padding: 12px;
+    margin: 8px 0;
+    border: none;
+    border-radius: 6px;
+    font-size: 16px;
+  }
+  button {
+    background-color: #007bff;
+    color: white;
+    cursor: pointer;
+    transition: 0.3s;
+  }
+  button:hover { background-color: #0056b3; transform: scale(1.05); }
+  .hidden { display: none; }
+  #seatLayout { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; justify-items: center; }
+  #busList button, #seatLayout button { margin: 5px; width: 90%; }
+  .backBtn { background-color: #888; margin-top: 15px; }
+  .alertCard {
+    background-color: #fffae5;
+    border-left: 5px solid #ffc107;
+    padding: 15px;
+    margin-top: 15px;
+    border-radius: 6px;
+    font-weight: bold;
+    animation: fadeIn 0.5s ease-in-out;
+    text-align: left;
+  }
+  @keyframes fadeIn { from {opacity:0} to {opacity:1} }
+  #qrContainer img { width: 200px; height: 200px; margin-top: 10px; }
+</style>
 </head>
 <body>
-  <div class="container">
-    <h2 id="title">Login</h2>
-    
-    <!-- Step 1: Mobile Number -->
-    <div id="loginForm">
-      <input type="text" id="mobile" placeholder="Enter Mobile Number">
-      <p id="error" class="error"></p>
-      <button class="send-btn" onclick="sendOtp()">Send OTP</button>
-    </div>
 
-    <!-- Step 2: OTP Verification -->
-    <div id="otpForm" style="display:none;">
-      <input type="text" id="otp" placeholder="Enter OTP">
-      <p id="errorOtp" class="error"></p>
-      <button class="verify-btn" onclick="verifyOtp()">Verify OTP</button>
-    </div>
+<!-- Login Page -->
+<div class="container" id="loginPage">
+  <h2 id="loginTitle">Login</h2>
+  <input type="text" id="mobile" placeholder="Enter mobile number">
+  <button onclick="sendOTP()" id="sendBtn">Send OTP</button>
+  <input type="text" id="otp" class="hidden" placeholder="Enter OTP">
+  <button onclick="verifyOTP()" class="hidden" id="verifyBtn">Verify OTP</button>
+</div>
 
-    <!-- Step 3: Language Selection -->
-    <div id="languageForm" style="display:none;">
-      <h2>Select Your Language</h2>
-      <button class="tamil" onclick="selectLanguage('Tamil')">தமிழ்</button>
-      <button class="english" onclick="selectLanguage('English')">English</button>
-      <button class="malayalam" onclick="selectLanguage('Malayalam')">മലയാളം</button>
-      <button class="telugu" onclick="selectLanguage('Telugu')">తెలుగు</button>
-      <button class="kannada" onclick="selectLanguage('Kannada')">ಕನ್ನಡ</button>
-    </div>
+<!-- Language Page -->
+<div class="container hidden" id="languagePage">
+  <h2>Select Language</h2>
+  <button onclick="setLanguage('English')">English</button>
+  <button onclick="setLanguage('Tamil')">தமிழ்</button>
+  <button onclick="setLanguage('Telugu')">తెలుగు</button>
+  <button onclick="setLanguage('Kannada')">ಕನ್ನಡ</button>
+  <button onclick="setLanguage('Hindi')">हिंदी</button>
+</div>
 
-    <!-- Step 4: Home Page -->
-    <div id="homePage" style="display:none;">
-      <h2 id="welcomeText">Plan Your Travel 🚌</h2>
-      <input type="text" id="fromPlace" placeholder="From Place">
-      <input type="text" id="toPlace" placeholder="To Destination">
-      
-      <label for="travelTime" id="timeLabel">Choose Time:</label>
-      <input type="time" id="travelTime">
-      <select id="ampm">
-        <option value="AM">AM</option>
-        <option value="PM">PM</option>
-      </select>
+<!-- Home Page -->
+<div class="container hidden" id="homePage">
+  <h2 id="welcomeText">Welcome</h2>
+  <button onclick="showSearch()" id="busBtn">Find Buses</button>
+  <button onclick="showMedical()" id="medBtn">Medical Rescue</button>
+  <button onclick="showPanic()" id="panicBtn">Panic Button</button>
+  <button onclick="showGreenScore()" id="greenBtn">Green Score</button>
+</div>
 
-      <button onclick="findBuses()" style="background:#28a745;">Find Buses</button>
-    </div>
+<!-- Bus Search -->
+<div class="container hidden" id="searchPage">
+  <h2 id="searchTitle">Bus Search</h2>
+  <input type="text" id="from" placeholder="From">
+  <input type="text" id="to" placeholder="To">
+  <input type="time" id="time">
+  <button onclick="showBuses()">Find Buses</button>
+  <button class="backBtn" onclick="showHome()">Back</button>
+</div>
 
-    <!-- Step 5: Available Buses -->
-    <div id="busPage" style="display:none;">
-      <h2 id="busTitle">Available Buses</h2>
-      <p id="route"></p>
-      <div id="busList"></div>
-    </div>
+<!-- Bus List -->
+<div class="container hidden" id="busListPage">
+  <h2 id="availableText">Available Buses</h2>
+  <div id="busList"></div>
+  <button class="backBtn" onclick="showSearch()">Back</button>
+</div>
 
-    <!-- Step 6: Seat Selection -->
-    <div id="seatPage" style="display:none;">
-      <h2>Select Your Seats</h2>
-      <h3 id="busName"></h3>
-      <div class="seats" id="seatContainer"></div>
-      <div id="summary">
-        Selected Seats: <span id="selectedCount">0</span><br>
-        Total Price: ₹<span id="totalPrice">0</span>
-      </div>
-      <button onclick="bookTickets()" style="background:blue;">Book Ticket</button>
-    </div>
-  </div>
+<!-- Seat Selection -->
+<div class="container hidden" id="seatPage">
+  <h2 id="seatTitle">Choose Your Seat</h2>
+  <div id="seatLayout"></div>
+  <p id="priceDisplay"></p>
+  <button id="payBtn" class="hidden" onclick="generateQR()">Generate QR for Payment</button>
+  <div id="qrContainer" class="hidden"></div>
+  <button class="backBtn" onclick="showBuses()">Back</button>
+</div>
 
-  <script>
-    // OTP Flow
-    function sendOtp() {
-      let mobile = document.getElementById("mobile").value;
-      if (mobile.length === 10) {
-        document.getElementById("loginForm").style.display = "none";
-        document.getElementById("otpForm").style.display = "block";
-        document.getElementById("title").innerText = "Verify OTP";
-        alert("Dummy OTP sent: 1234");
-      } else {
-        document.getElementById("error").innerText = "Enter a valid 10-digit number";
-      }
-    }
+<!-- Medical Rescue -->
+<div class="container hidden" id="medicalPage">
+  <h2 id="medTitle">Medical Rescue</h2>
+  <select id="emergency" onchange="showFirstAid()">
+    <option value="">Select emergency type</option>
+    <option value="Accident">Accident</option>
+    <option value="Heart Attack">Heart Attack</option>
+    <option value="Fever">Fever</option>
+    <option value="Injury">Injury</option>
+    <option value="Other">Other</option>
+  </select>
+  <p id="firstAid" class="alertCard hidden"></p>
+  <button onclick="showHome()">Back</button>
+</div>
 
-    function verifyOtp() {
-      let otp = document.getElementById("otp").value;
-      if (otp === "1234") {
-        document.getElementById("otpForm").style.display = "none";
-        document.getElementById("languageForm").style.display = "block";
-        document.getElementById("title").innerText = "Choose Language";
-      } else {
-        document.getElementById("errorOtp").innerText = "Invalid OTP, try again!";
-      }
-    }
+<!-- Panic Button -->
+<div class="container hidden" id="panicPage">
+  <h2 id="panicTitle">Panic Alert</h2>
+  <input type="text" id="panicName" placeholder="Enter your name">
+  <input type="text" id="panicMobile" placeholder="Enter mobile number">
+  <button onclick="sendPanic()">Send Panic Alert</button>
+  <div id="panicMsgCard" class="alertCard hidden"></div>
+  <button class="backBtn" onclick="showHome()">Back</button>
+</div>
 
-    // Language Selection
-    function selectLanguage(lang) {
-      localStorage.setItem("preferredLanguage", lang);
-      document.getElementById("languageForm").style.display = "none";
-      document.getElementById("homePage").style.display = "block";
-      document.getElementById("title").innerText = "Home";
-      setLanguage(lang);
-    }
+<!-- Green Score -->
+<div class="container hidden" id="greenScorePage">
+  <h2 id="greenTitle">Green Score</h2>
+  <p id="greenMsg">You saved 2.5kg of CO₂ today by using MTC! 🌱</p>
+  <button class="backBtn" onclick="showHome()">Back</button>
+</div>
 
-    function setLanguage(lang) {
-      const translations = {
-        "English": { welcome:"Plan Your Travel 🚌", from:"From Place", to:"To Destination", time:"Choose Time:", button:"Find Buses", busTitle:"Available Buses" },
-        "Tamil": { welcome:"உங்கள் பயணத்தை திட்டமிடுங்கள் 🚌", from:"புறப்படும் இடம்", to:"சேரும் இடம்", time:"நேரத்தைத் தேர்ந்தெடுக்கவும்:", button:"பேருந்துகளை காண்க", busTitle:"கிடைக்கும் பேருந்துகள்" },
-        "Malayalam": { welcome:"നിങ്ങളുടെ യാത്ര പദ്ധതിയിടുക 🚌", from:"തുടങ്ങുന്ന സ്ഥലം", to:"ലക്ഷ്യസ്ഥാനം", time:"സമയം തിരഞ്ഞെടുക്കുക:", button:"ബസുകൾ കണ്ടെത്തുക", busTitle:"ലഭ്യമായ ബസുകൾ" },
-        "Telugu": { welcome:"మీ ప్రయాణాన్ని ప్రణాళిక చేయండి 🚌", from:"ప్రారంభ స్థలం", to:"గమ్యం", time:"సమయాన్ని ఎంచుకోండి:", button:"బస్సులను కనుగొనండి", busTitle:"అందుబాటులో ఉన్న బస్సులు" },
-        "Kannada": { welcome:"ನಿಮ್ಮ ಪ್ರಯಾಣವನ್ನು ಯೋಜಿಸಿ 🚌", from:"ಪ್ರಾರಂಭದ ಸ್ಥಳ", to:"ಗಮ್ಯಸ್ಥಾನ", time:"ಸಮಯವನ್ನು ಆಯ್ಕೆಮಾಡಿ:", button:"ಬಸ್ಸುಗಳನ್ನು ಹುಡುಕಿ", busTitle:"ಲಭ್ಯವಿರುವ ಬಸ್ಸುಗಳು" }
-      };
-      let t = translations[lang];
-      document.getElementById("welcomeText").innerText = t.welcome;
-      document.getElementById("fromPlace").placeholder = t.from;
-      document.getElementById("toPlace").placeholder = t.to;
-      document.getElementById("timeLabel").innerText = t.time;
-      document.querySelector("#homePage button").innerText = t.button;
-      document.getElementById("busTitle").innerText = t.busTitle;
-    }
+<!-- QRCode Library -->
+<script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
 
-    // Bus Search
-    function findBuses() {
-      let from = document.getElementById("fromPlace").value;
-      let to = document.getElementById("toPlace").value;
-      let time = document.getElementById("travelTime").value;
-      let ampm = document.getElementById("ampm").value;
+<script>
+let language = "English";
+let otpCode = "";
+let selectedSeat = null;
+let selectedBus = null;
 
-      if (from && to && time) {
-        document.getElementById("homePage").style.display = "none";
-        document.getElementById("busPage").style.display = "block";
-        document.getElementById("title").innerText = "Available Buses";
+// Translations
+const translations = {
+  English: { loginTitle:"Login", sendBtn:"Send OTP", verifyBtn:"Verify OTP",
+    welcomeText:"Welcome", busBtn:"Find Buses", medBtn:"Medical Rescue",
+    panicBtn:"Panic Button", greenBtn:"Green Score", searchTitle:"Bus Search",
+    availableText:"Available Buses", seatTitle:"Choose Your Seat",
+    medTitle:"Medical Rescue", panicTitle:"Panic Alert", panicMsg:"Police service team is on the way 🚓",
+    greenTitle:"Green Score", greenMsg:"You saved 2.5kg CO₂ today by using MTC! 🌱"
+  },
+  Tamil:{ loginTitle:"உள்நுழையவும்", sendBtn:"OTP அனுப்பு", verifyBtn:"OTP சரிபார்க்கவும்",
+    welcomeText:"வரவேற்பு", busBtn:"பேருந்து தேடு", medBtn:"மருத்துவ உதவி",
+    panicBtn:"பயங்கர அழைப்பு", greenBtn:"பசுமை மதிப்பெண்", searchTitle:"பேருந்து தேடல்",
+    availableText:"கிடைக்கும் பேருந்துகள்", seatTitle:"உங்கள் இருக்கையைத் தேர்ந்தெடுக்கவும்",
+    medTitle:"மருத்துவ அவசரம்", panicTitle:"பயங்கர அழைப்பு", panicMsg:"காவல் சேவை வருகிறார்கள் 🚓",
+    greenTitle:"பசுமை மதிப்பெண்", greenMsg:"நீங்கள் இன்று MTCஐ பயன்படுத்தி 2.5kg CO₂ஐ சேமித்துள்ளீர்கள்! 🌱"
+  },
+  Telugu:{ loginTitle:"లాగిన్", sendBtn:"OTP పంపు", verifyBtn:"OTP ధృవీకరించండి",
+    welcomeText:"స్వాగతం", busBtn:"బస్సులు కనుగొనండి", medBtn:"మెడికల్ రక్షణ",
+    panicBtn:"పానిక్ బటన్", greenBtn:"హరిత స్కోరు", searchTitle:"బస్ శోధన",
+    availableText:"అందుబాటులో ఉన్న బస్సులు", seatTitle:"మీ సీటు ఎంచుకోండి",
+    medTitle:"మెడికల్ అత్యవసరం", panicTitle:"పానిక్ అలర్ట్", panicMsg:"పోలీస్ సేవ బృందం రాబోతుంది 🚓",
+    greenTitle:"హరిత స్కోరు", greenMsg:"మీరు ఈ రోజు MTC ఉపయోగించి 2.5kg CO₂ ను సేవ్ చేసారు! 🌱"
+  },
+  Kannada:{ loginTitle:"ಲಾಗಿನ್ ಮಾಡಿ", sendBtn:"OTP ಕಳುಹಿಸಿ", verifyBtn:"OTP ಪರಿಶೀಲಿಸಿ",
+    welcomeText:"ಸ್ವಾಗತ", busBtn:"ಬಸ್ ಹುಡುಕಿ", medBtn:"ವೈದ್ಯಕ ರಕ್ಷಣಾ",
+    panicBtn:"ಪ್ಯಾನಿಕ್ ಬಟನ್", greenBtn:"ಹಸಿರು ಅಂಕೆ", searchTitle:"ಬಸ್ ಶೋಧನೆ",
+    availableText:"ಲಭ್ಯವಿರುವ ಬಸ್ಸುಗಳು", seatTitle:"ನಿಮ್ಮ ಆಸನ ಆಯ್ಕೆಮಾಡಿ",
+    medTitle:"ವೈದ್ಯಕ ತುರ್ತು", panicTitle:"ಪ್ಯಾನಿಕ್ ಅಲರ್ಟ್", panicMsg:"ಪೋಲೀಸ್ ತಂಡ ಬರುತ್ತಿದೆ 🚓",
+    greenTitle:"ಹಸಿರು ಅಂಕೆ", greenMsg:"ನೀವು ಇಂದು MTC ಬಳಸಿ 2.5kg CO₂ ಉಳಿಸಿದ್ದಾರೆ! 🌱"
+  },
+  Hindi:{ loginTitle:"लॉगिन", sendBtn:"OTP भेजें", verifyBtn:"OTP सत्यापित करें",
+    welcomeText:"स्वागत है", busBtn:"बसें खोजें", medBtn:"चिकित्सा सहायता",
+    panicBtn:"पैनिक बटन", greenBtn:"ग्रीन स्कोर", searchTitle:"बस खोज",
+    availableText:"उपलब्ध बसें", seatTitle:"अपनी सीट चुनें",
+    medTitle:"चिकित्सा आपातकाल", panicTitle:"पैनिक अलर्ट", panicMsg:"पुलिस टीम रास्ते में है 🚓",
+    greenTitle:"ग्रीन स्कोर", greenMsg:"आज आपने MTC का उपयोग करके 2.5kg CO₂ बचाया! 🌱"
+  }
+};
 
-        document.getElementById("route").innerText = "From: " + from + " → To: " + to + " at " + time + " " + ampm;
+// ---------- Utility ----------
+function hideAll(){ document.querySelectorAll('.container').forEach(d=>d.classList.add('hidden')); }
+function translateUI(){ const t = translations[language]; for(const k in t){ const el=document.getElementById(k); if(el) el.innerText=t[k]; } }
+function formatTimeAMPM(time24){ if(!time24) return ""; const [h,m]=time24.split(":"); const hour12=(parseInt(h)%12)||12; const ampm=parseInt(h)<12?"AM":"PM"; return `${hour12}:${m} ${ampm}`; }
 
-        let buses = [
-          { id: 1, name: "MTC Express", timing: "10:00 AM", fare: 25 },
-          { id: 2, name: "City Rapid", timing: "10:30 AM", fare: 30 },
-          { id: 3, name: "GreenLine", timing: "11:00 AM", fare: 20 }
-        ];
+// ---------- Login ----------
+function sendOTP(){ 
+  const mobile = document.getElementById('mobile').value;
+  if(mobile.length===10 && /^\d+$/.test(mobile)){ 
+    otpCode=Math.floor(1000+Math.random()*9000).toString();
+    alert("OTP sent: "+otpCode);
+    document.getElementById('otp').classList.remove('hidden');
+    document.getElementById('verifyBtn').classList.remove('hidden');
+  } else { alert("Enter valid 10-digit number"); }
+}
+function verifyOTP(){ 
+  if(document.getElementById('otp').value===otpCode){ hideAll(); document.getElementById('languagePage').classList.remove('hidden'); } 
+  else alert("Incorrect OTP");
+}
+function setLanguage(lang){ language=lang; translateUI(); hideAll(); document.getElementById('homePage').classList.remove('hidden'); }
 
-        let busListDiv = document.getElementById("busList");
-        busListDiv.innerHTML = "";
+// ---------- Home ----------
+function showHome(){ hideAll(); document.getElementById('homePage').classList.remove('hidden'); translateUI(); }
 
-        buses.forEach(bus => {
-          let div = document.createElement("div");
-          div.className = "bus-card";
-          div.innerHTML = `
-            <h3>${bus.name}</h3>
-            <p>Timing: ${bus.timing}</p>
-            <p>Fare: ₹${bus.fare}</p>
-            <button style="background:green;" onclick="selectBus('${bus.name}', ${bus.fare})">Select</button>
-          `;
-          busListDiv.appendChild(div);
-        });
-      } else {
-        alert("Please fill all details ❗");
-      }
-    }
+// ---------- Bus ----------
+function showSearch(){ hideAll(); document.getElementById('searchPage').classList.remove('hidden'); translateUI(); }
+function showBuses(){ 
+  hideAll(); document.getElementById('busListPage').classList.remove('hidden'); translateUI();
+  const from=document.getElementById('from').value||"Unknown";
+  const to=document.getElementById('to').value||"Unknown";
+  const time=formatTimeAMPM(document.getElementById('time').value);
+  const busList=document.getElementById('busList'); busList.innerHTML='';
+  const buses=[{name:"MTC Express 101", fare:30},{name:"MTC Deluxe 202", fare:40}];
+  buses.forEach(bus=>{
+    let btn=document.createElement("button"); 
+    btn.innerText=`${bus.name} - ₹${bus.fare} | ${from} → ${to} at ${time}`;
+    btn.onclick=()=>selectBus(bus);
+    busList.appendChild(btn);
+  });
+}
+function selectBus(bus){
+  selectedBus=bus;
+  hideAll(); document.getElementById('seatPage').classList.remove('hidden'); translateUI();
+  const seatLayout=document.getElementById('seatLayout'); seatLayout.innerHTML='';
+  for(let i=1;i<=40;i++){
+    let seatBtn=document.createElement("button");
+    seatBtn.innerText="Seat "+i;
+    seatBtn.onclick=()=>{ selectedSeat=i; showFare(bus.fare); };
+    seatLayout.appendChild(seatBtn);
+  }
+  document.getElementById('payBtn').classList.add('hidden');
+  document.getElementById('qrContainer').classList.add('hidden');
+}
+function showFare(fare){ 
+  document.getElementById('priceDisplay').innerText=`Fare: ₹${fare}`; 
+  document.getElementById('payBtn').classList.remove('hidden');
+}
 
-    // Seat Selection
-    function selectBus(name, fare) {
-      document.getElementById("busPage").style.display = "none";
-      document.getElementById("seatPage").style.display = "block";
-      document.getElementById("title").innerText = "Select Seats";
+// ---------- QR Payment ----------
+function generateQR(){
+  if(!selectedSeat || !selectedBus) return alert("Select a seat first");
+  const fare = selectedBus.fare;
+  const upiLink = `upi://pay?pa=mtc@upi&pn=MTC%20Bus&am=${fare}&cu=INR`;
+  document.getElementById('qrContainer').classList.remove('hidden');
+  document.getElementById('qrContainer').innerHTML='';
+  QRCode.toDataURL(upiLink, {width:200}, function(err,url){
+    if(err) console.error(err);
+    else document.getElementById('qrContainer').innerHTML=`<img src="${url}" alt="QR"><p>Scan to pay ₹${fare}</p>`;
+  });
+}
 
-      document.getElementById("busName").innerText = "Bus: " + name;
+// ---------- Medical Rescue ----------
+function showMedical(){ hideAll(); document.getElementById('medicalPage').classList.remove('hidden'); document.getElementById('firstAid').classList.add('hidden'); translateUI(); }
+function showFirstAid(){
+  const val=document.getElementById('emergency').value;
+  const fa=document.getElementById('firstAid'); fa.classList.remove('hidden');
+  const eta = Math.floor(Math.random()*11 + 5);
+  let msg="";
+  if(val==="Accident") msg="Call ambulance 🚑, apply first aid, stop bleeding.";
+  else if(val==="Heart Attack") msg="Call 108 immediately 🚑, perform CPR if trained.";
+  else if(val==="Fever") msg="Give water 💧, keep patient cool, rest.";
+  else if(val==="Injury") msg="Clean wound 🩹, apply bandage, avoid infection.";
+  else msg="Stay calm, call for help if needed.";
+  fa.innerHTML = `<strong>Rescue Team ETA:</strong> ${eta} min ⏱️<br><strong>First Aid:</strong> ${msg}`;
+}
 
-      let seatContainer = document.getElementById("seatContainer");
-      seatContainer.innerHTML = "";
-      let selectedSeats = [];
+// ---------- Panic ----------
+function showPanic(){ hideAll(); document.getElementById('panicPage').classList.remove('hidden'); document.getElementById('panicMsgCard').classList.add('hidden'); translateUI(); }
+function sendPanic(){
+  const name=document.getElementById('panicName').value.trim();
+  const mobile=document.getElementById('panicMobile').value.trim();
+  if(!name || !mobile){ alert("Enter Name & Mobile"); return; }
+  const card=document.getElementById('panicMsgCard'); 
+  card.classList.remove('hidden');
+  const eta = Math.floor(Math.random()*11 + 5);
+  card.innerHTML=`🚓 Hello ${name}, police are on the way! ETA: ${eta} min. Stay safe.`;
+}
 
-      for (let i = 1; i <= 40; i++) {
-        let seat = document.createElement("div");
-        seat.className = "seat";
-        seat.innerText = i;
+// ---------- Green Score ----------
+function showGreenScore(){ hideAll(); document.getElementById('greenScorePage').classList.remove('hidden'); translateUI(); }
+</script>
 
-        seat.addEventListener("click", function () {
-          if (!seat.classList.contains("booked")) {
-            seat.classList.toggle("selected");
-            if (selectedSeats.includes(i)) {
-              selectedSeats = selectedSeats.filter(s => s !== i);
-            } else {
-              selectedSeats.push(i);
-            }
-            document.getElementById("selectedCount").innerText = selectedSeats.length;
-            document.getElementById("totalPrice").innerText = selectedSeats.length * fare;
-          }
-        });
-
-        seatContainer.appendChild(seat);
-      }
-
-      window.bookTickets = function() {
-        if (selectedSeats.length === 0) {
-          alert("Please select at least 1 seat ❗");
-          return;
-        }
-        alert("🎟 Booking Confirmed!\nBus: " + name +
-          "\nSeats: " + selectedSeats.join(", ") +
-          "\nTotal: ₹" + (selectedSeats.length * fare));
-      };
-    }
-  </script>
 </body>
 </html>
